@@ -1,0 +1,149 @@
+事务控制语言：
+Rollback、Commit
+
+1、事务（transaction）
+	定义：一个事务是一个完整的业务逻辑单元，不可再分，比如银行转账，要么同时成功，要么同时失败，需要使用数据库的事务机制
+	只有DML语句才支持事务，DML语句包括：update、insert、delete
+	因为这三个语句都是和数据库表当中的数据相关，事务的存在是为了保证数据的完整性和安全性
+	假设所有的业务都能使用一条DML语句搞定，还需要事务机制吗？不需要，这样事务机制就没有存在的意义了
+	实际情况下一个事务需要多个多条DML语句完成
+
+	事务原理：记录历史操作，或者说在缓存中操作，并不会真真正修改硬盘上的数据，提交和回滚事务都会导致事务结束，并清空历史操作，区别	在于硬盘上的文件是否改变，保证了要么同时成功，要么同时失败，多条DML捆绑在一起
+	可以设置保存点：savepoint
+
+	事物的特性：ACID
+	A原子性（Atomicity）：事务是最小的工作单元，不可再分
+	C一致性（Consistency）：事务必须保证多条DML语句同时成功或者同时失败
+	I隔离性（Isolation）：事务A与事务B之间具有隔离，各个事务的执行互不干扰，并发执行的事务不会相互影响，隔离有相应的级别
+	D持久性（Durability）：最终数据必须持久化到硬盘文件中事务才算成功结束
+
+	隔离级别：
+	关于事务之间的隔离性：
+	事务隔离性存在隔离级别，理论上隔离级别存在四个，实际上都是从二档起步
+	第一级别：读未提交，read uncommitted，可以读取到对方未提交的数据，存在脏读现象，表示读到了脏数据，数据是不稳定的，还没有确定
+	第二级别：读已提交，read committed，对方事务提交之后的事务我方可以读取到，存在的问题，不可重复读，在读取之后数据可能被修改，只		能再次读取到修改之后的数据，修改之前的数据不能再出现，读了以后被修改了就不能再读到一样的了，解决了脏读现象，出现了不可重复读问		题
+	第三级别：可重复读，repeatable read，提交之后也读不到，解决了不可重复读问题，存在读取到的数据是幻象
+	第四级别：序列化/串行化，serializable，解决了所有问题，两个事务不能并发，同步，效率低，需要排队
+
+	Oracle数据库默认的隔离级别是读已提交，MySQL默认的隔离级别是可重复读
+	
+	
+2、演示事务
+	mysql事务默认情况下是自动提交，只要执行一次DML就提交一次
+	怎么关闭自动提交，开启事务：
+	start transaction；
+	set autocommit = 1；//关闭事务
+
+	drop table if exists t_user;
+	create table t_user(
+	id int primary key auto_increment,
+	username varchar(255)
+	);
+---------------------------------------------------------------------------------------------------------------------------------------
+	mysql> insert into t_user (username) values ('zhangsan');
+	Query OK, 1 row affected (0.00 sec)
+	
+	mysql> rollback;
+	Query OK, 0 rows affected (0.00 sec)
+
+	mysql> select * from t_user;
+	+----+----------+
+	| id | username |
+	+----+----------+
+	|  1 | zhangsan |
+	+----+----------+
+	1 row in set (0.00 sec)
+	//只要执行一次DML语句就提交一次，不能回滚
+
+	//使用start transaction关闭自动提交机制，开启事务，手动提交
+	mysql> start transaction;
+	Query OK, 0 rows affected (0.00 sec)
+
+	mysql> insert into t_user (username) values ('lisi');
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> select * from t_user;
+	+----+----------+
+	| id | username |
+	+----+----------+
+	|  1 | zhangsan |
+	|  2 | lisi     |
+	+----+----------+
+	2 rows in set (0.00 sec)
+
+	mysql> rollback;
+	Query OK, 0 rows affected (0.00 sec)
+
+	mysql> select * from t_user;
+	+----+----------+
+	| id | username |
+	+----+----------+
+	|  1 | zhangsan |
+	+----+----------+
+	1 row in set (0.00 sec)
+
+
+	//手动提交，不提交就回滚也会占用ID
+	mysql> start transaction;
+	Query OK, 0 rows affected (0.00 sec)
+
+	mysql> insert into t_user (username) values ('wangwu');
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> commit;
+	Query OK, 0 rows affected (0.01 sec)
+
+	mysql> select * from t_user;
+	+----+----------+
+	| id | username |
+	+----+----------+
+	|  1 | zhangsan |
+	|  3 | lisi     |
+	|  4 | wangwu   |
+	+----+----------+
+	3 rows in set (0.00 sec)
+
+	mysql> rollback;
+	Query OK, 0 rows affected (0.00 sec)
+
+	mysql> select * from t_user;
+	+----+----------+
+	| id | username |
+	+----+----------+
+	|  1 | zhangsan |
+	|  3 | lisi     |
+	|  4 | wangwu   |
+	+----+----------+
+	3 rows in set (0.00 sec)
+	//提交或者回滚都表示事务结束
+	如果存在savepoint使用rollback语句回滚到point会依然在事务里面，不会结束当前事务
+	
+---------------------------------------------------------------------------------------------------------------------------------------
+	
+	//演示读未提交，使用两个事务，开启两个窗口，两个事务
+	//设置隔离级别，新版本transaction_isolation
+	mysql> set global transaction isolation level read uncommitted;
+	Query OK, 0 rows affected (0.01 sec)
+	//查看事务的全局隔离级别
+	mysql> select @@global.tx_isolation;
+	+-----------------------+
+	| @@global.tx_isolation |
+	+-----------------------+
+	| READ-UNCOMMITTED      |
+	+-----------------------+
+	1 row in set (0.00 sec)
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+	//演示查看MySQL文件夹中的图片
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+
+	
+		
+	
+
+
+
+
