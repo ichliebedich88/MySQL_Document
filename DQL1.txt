@@ -1,0 +1,982 @@
+1、MySQL的卸载：
+	双击安装包--->remove
+	手动删除C盘隐藏文件夹ProgramDate中的MySQL
+	手动删除ProgramFiles中的MySQL目录
+	修改sql密码：……
+	MySQL概述：
+	DB：DataBase数据库在硬盘上以文件形式存在
+	DBMS：数据库管理系统，Oracle、MySQL、DB2 Sybase SqlServer……
+	SQL：结构化查询语言，标准通用，适合于所有数据库产品
+	我们SQL属于高级语言，只要能看懂英语单词，写出来的sql语句可以读懂什么意思
+	SQL语句在执行时的时候内部也会编译，然后再执行sql（sql语句内部是由DBMS完成）
+	DBMS负责执行sql语句，通过操作sql语句来操作DB当中的数据，DBMS-（执行）-SQL-（操作）-DB
+2、什么是表
+	table是数据库的基本组成单元，所有数据都以表格的形式组织，目的是可读性强
+	包括：行（记录/数据）列（字段/column）
+	每一个字段包括的属性：字段名、数据类型、相关的约束（数据库中字符串叫varchar）
+3、学MySQL学习通用的SQL语句
+	SQL中包括增删改查
+	SQL语句分类：
+	DQL（数据查询语言）：查询语句，select语句	
+	DML（数据操作语言）：insert delete update对表中数据增删改
+	DDL（数据定义语言）：create drop alter 对表结构的增删改，比如删表，删字段
+	TCL（事物控制语言）：commit（提交事物） rollback（回滚事物）T代表transaction
+	DCL（数据控制语言）：grant（授权） revoke（撤销权限）
+	
+4、导入数据
+	登录MySQL
+	查看有哪些数据库：show databases；
+	+--------------------+
+	| Database           |
+	+--------------------+
+	| information_schema |
+	| mysql              |
+	| performance_schema |
+	| test               |
+	+--------------------+
+	4rows in set (0.00 sec)
+	创建自己的数据库：create database bjpowernode；
+	使用bjpowernode数据库，use bjpowernode；
+	show tables；查看当前使用的数据库中有哪些表
+	初始化数据：source C:\Users\84181\Documents\resources\bjpowernode.sql数据初始化完成以后有三张表
+	+-----------------------+
+	| Tables_in_bjpowernode |
+	+-----------------------+
+	| dept                  |部门表
+	| emp                   |员工表
+	| salgrade              |工资等级表
+	+-----------------------+
+	之后又按照老师的方法加入了school.sql，很简单，drop database school；删除数据
+	注意：导入操作要在use命令转到对应数据库之后才能导入
+	3 rows in set (0.00 sec)
+5、以.sql为后缀的文件叫sql脚本
+	该文件中编写了大量的sql语句，这样的脚本叫sql脚本，太大的文件打不开，所以一定要记住source命令，可以批量执行sql脚本，使用source命令完成初始化
+6、删除数据库：drop database bjpowernode;
+7、查看表结构
+	mysql> desc dept;//表名
+	+--------+-------------+------+-----+---------+-------+
+	| Field  | Type        | Null | Key | Default | Extra |
+	+--------+-------------+------+-----+---------+-------+
+	| DEPTNO | int(2)      | NO   | PRI | NULL    |       |部门编号
+	| DNAME  | varchar(14) | YES  |     | NULL    |       |部门名称
+	| LOC    | varchar(13) | YES  |     | NULL    |       |部门位置
+	+--------+-------------+------+-----+---------+-------+
+	3 rows in set (0.01 sec)
+
+	mysql> desc emp;
+	+----------+-------------+------+-----+---------+-------+
+	| Field    | Type        | Null | Key | Default | Extra |
+	+----------+-------------+------+-----+---------+-------+
+	| EMPNO    | int(4)      | NO   | PRI | NULL    |       |员工编号
+	| ENAME    | varchar(10) | YES  |     | NULL    |       |员工名字
+	| JOB      | varchar(9)  | YES  |     | NULL    |       |工作岗位
+	| MGR      | int(4)      | YES  |     | NULL    |       |上级领导编号
+	| HIREDATE | date        | YES  |     | NULL    |       |入职日期
+	| SAL      | double(7,2) | YES  |     | NULL    |       |月薪
+	| COMM     | double(7,2) | YES  |     | NULL    |       |津贴
+	| DEPTNO   | int(2)      | YES  |     | NULL    |       |部门编号
+	+----------+-------------+------+-----+---------+-------+
+	8 rows in set (0.01 sec)
+
+	mysql> desc salgrade;
+	+-------+---------+------+-----+---------+-------+
+	| Field | Type    | Null | Key | Default | Extra |
+	+-------+---------+------+-----+---------+-------+
+	| GRADE | int(11) | YES  |     | NULL    |       |等级
+	| LOSAL | int(11) | YES  |     | NULL    |       |最低薪资
+	| HISAL | int(11) | YES  |     | NULL    |       |最高薪资
+	+-------+---------+------+-----+---------+-------+
+	3 rows in set (0.01 sec)
+8、表格中的数据，真正的sql语句
+	mysql> select * from dept;
+	+--------+------------+----------+
+	| DEPTNO | DNAME      | LOC      |
+	+--------+------------+----------+
+	|     10 | ACCOUNTING | NEW YORK |
+	|     20 | RESEARCH   | DALLAS   |
+	|     30 | SALES      | CHICAGO  |
+	|     40 | OPERATIONS | BOSTON   |
+	+--------+------------+----------+
+	4 rows in set (0.00 sec)
+
+	mysql> select * from emp;
+	+-------+--------+-----------+------+------------+---------+---------+--------+
+	| EMPNO | ENAME  | JOB       | MGR  | HIREDATE   | SAL     | COMM    | DEPTNO |
+	+-------+--------+-----------+------+------------+---------+---------+--------+
+	|  7369 | SMITH  | CLERK     | 7902 | 1980-12-17 |  800.00 |    NULL |     20 |
+	|  7499 | ALLEN  | SALESMAN  | 7698 | 1981-02-20 | 1600.00 |  300.00 |     30 |
+	|  7521 | WARD   | SALESMAN  | 7698 | 1981-02-22 | 1250.00 |  500.00 |     30 |
+	|  7566 | JONES  | MANAGER   | 7839 | 1981-04-02 | 2975.00 |    NULL |     20 |
+	|  7654 | MARTIN | SALESMAN  | 7698 | 1981-09-28 | 1250.00 | 1400.00 |     30 |
+	|  7698 | BLAKE  | MANAGER   | 7839 | 1981-05-01 | 2850.00 |    NULL |     30 |
+	|  7782 | CLARK  | MANAGER   | 7839 | 1981-06-09 | 2450.00 |    NULL |     10 |
+	|  7788 | SCOTT  | ANALYST   | 7566 | 1987-04-19 | 3000.00 |    NULL |     20 |
+	|  7839 | KING   | PRESIDENT | NULL | 1981-11-17 | 5000.00 |    NULL |     10 |大老板上级领导为空
+	|  7844 | TURNER | SALESMAN  | 7698 | 1981-09-08 | 1500.00 |    0.00 |     30 |
+	|  7876 | ADAMS  | CLERK     | 7788 | 1987-05-23 | 1100.00 |    NULL |     20 |
+	|  7900 | JAMES  | CLERK     | 7698 | 1981-12-03 |  950.00 |    NULL |     30 |
+	|  7902 | FORD   | ANALYST   | 7566 | 1981-12-03 | 3000.00 |    NULL |     20 |
+	|  7934 | MILLER | CLERK     | 7782 | 1982-01-23 | 1300.00 |    NULL |     10 |
+	+-------+--------+-----------+------+------------+---------+---------+--------+
+	14 rows in set (0.00 sec)
+
+	mysql> select * from salgrade;
+	+-------+-------+-------+
+	| GRADE | LOSAL | HISAL |
+	+-------+-------+-------+
+	|     1 |   700 |  1200 |
+	|     2 |  1201 |  1400 |
+	|     3 |  1401 |  2000 |
+	|     4 |  2001 |  3000 |
+	|     5 |  3001 |  9999 |
+	+-------+-------+-------+
+	5 rows in set (0.00 sec)
+
+9、常用的命令
+	查询当前使用的数据库：select database();
+	查看数据库版本：select version();
+
+	mysql> select database();
+	+-------------+
+	| database()  |
+	| bjpowernode |
+	+-------------+
+	1 row in set (0.00 sec)
+
+	mysql> select version();
+	+-----------+
+	| version() |
+	+-----------+
+	| 5.5.62    |
+	+-----------+
+	1 row in set (0.00 sec)
+以上均为sql命令，不是结构化查询语言
+10、结束一条语句：\c，退出mysql：exit、QUIT、\q
+11、查看建表语句：
+mysql> show create tables emp;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'tables emp' at line 1
+mysql> show create table emp;
++-------	+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Table | Create Table                                                                                                                                                                                                                                                                                                                                        |
++-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| emp   | CREATE TABLE `emp` (
+  `EMPNO` int(4) NOT NULL,
+  `ENAME` varchar(10) DEFAULT NULL,
+  `JOB` varchar(9) DEFAULT NULL,
+  `MGR` int(4) DEFAULT NULL,
+  `HIREDATE` date DEFAULT NULL,
+  `SAL` double(7,2) DEFAULT NULL,
+  `COMM` double(7,2) DEFAULT NULL,
+  `DEPTNO` int(2) DEFAULT NULL,
+  PRIMARY KEY (`EMPNO`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 |
++-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+1 row in set (0.00 sec)
+
+
+12、简单查询：DQL
+	正式步入sql语言：
+	语法格式：
+	select 字段名1，字段名2，字段名3，……from 表名；
+	提示，任何一个sql语句必须以“；”结尾
+	带字符串用单引号，不建议使用双引号，为了通用性
+	查询全部：select * from 表名；
+	字段可以参与数学运算：select ename，sal*12 （as） yearsal from emp；
+	sql不区分大小写
+
+13、条件查询
+	语法格式：select 字段1、字段2、字段3，…… from 表名 where 条件；
+	执行顺序：from---where---select
+	mysql> select sal from emp where ename='SMITH';//字符串加单引号
+	+--------+
+	| sal    |
+	+--------+
+	| 800.00 |
+	+--------+
+	1 row in set (0.00 sec)
+
+	mysql> select ename from emp where sal=5000;
+	+-------+
+	| ename |
+	+-------+
+	| KING  |
+	+-------+
+	1 row in set (0.00 sec)
+
+	mysql> select ename from emp where sal>=3000;
+	+-------+
+	| ename |
+	+-------+
+	| SCOTT |
+	| KING  |
+	| FORD  |
+	+-------+
+	3 rows in set (0.00 sec)
+
+	mysql> select ename from emp where sal<>3000;//!=
+	+--------+
+	| ename  |
+	+--------+
+	| SMITH  |
+	| ALLEN  |
+	| WARD   |
+	| JONES  |
+	| MARTIN |
+	| BLAKE  |
+	| CLARK  |
+	| KING   |
+	| TURNER |
+	| ADAMS  |
+	| JAMES  |
+	| MILLER |
+	+--------+
+	12 rows in set (0.00 sec)
+
+	mysql> select ename from emp where sal between 1000 and 3000;//包括1000和3000，闭区间，且左小右大，否则找不到
+	+--------+
+	| ename  |
+	+--------+
+	| ALLEN  |
+	| WARD   |
+	| JONES  |
+	| MARTIN |
+	| BLAKE  |
+	| CLARK  |
+	| SCOTT  |
+	| TURNER |
+	| ADAMS  |
+	| FORD   |
+	| MILLER |
+	+--------+
+	11 rows in set (0.00 sec)
+
+	mysql> select ename from emp where ename between 'A' and 'C';//字符方面左闭右开，但可以理解成clark>c
+	+-------+
+	| ename |
+	+-------+
+	| ALLEN |
+	| BLAKE |
+	| ADAMS |
+	+-------+
+	3 rows in set (0.00 sec)
+
+	mysql> select ename,sal from emp where comm is null;
+	+--------+---------+
+	| ename  | sal     |
+	+--------+---------+
+	| SMITH  |  800.00 |
+	| JONES  | 2975.00 |
+	| BLAKE  | 2850.00 |
+	| CLARK  | 2450.00 |
+	| SCOTT  | 3000.00 |
+	| KING   | 5000.00 |
+	| ADAMS  | 1100.00 |
+	| JAMES  |  950.00 |
+	| FORD   | 3000.00 |
+	| MILLER | 1300.00 |
+	+--------+---------+
+	10 rows in set (0.00 sec)
+
+	mysql> select ename,sal,comm from emp where comm is not null;
+	+--------+---------+---------+
+	| ename  | sal     | comm    |
+	+--------+---------+---------+
+	| ALLEN  | 1600.00 |  300.00 |
+	| WARD   | 1250.00 |  500.00 |
+	| MARTIN | 1250.00 | 1400.00 |
+	| TURNER | 1500.00 |    0.00 |
+	+--------+---------+---------+
+	4 rows in set (0.00 sec)
+	//数据库表中null和0.00有区别，数据库中null不是一个值，代表什么都没有，为空，空不是一个值，不能用等号衡量，必须使用is null/is 		not null，0不等于空，为了找出津贴还没设置的人
+
+	//找出没有津贴的人
+	mysql> select ename,sal,comm from emp where comm is null or comm = 0;
+	+--------+---------+------+
+	| ename  | sal     | comm |
+	+--------+---------+------+
+	| SMITH  |  800.00 | NULL |
+	| JONES  | 2975.00 | NULL |
+	| BLAKE  | 2850.00 | NULL |
+	| CLARK  | 2450.00 | NULL |
+	| SCOTT  | 3000.00 | NULL |
+	| KING   | 5000.00 | NULL |
+	| TURNER | 1500.00 | 0.00 |
+	| ADAMS  | 1100.00 | NULL |
+	| JAMES  |  950.00 | NULL |
+	| FORD   | 3000.00 | NULL |
+	| MILLER | 1300.00 | NULL |
+	+--------+---------+------+
+	11 rows in set (0.00 sec)
+
+	and和or优先级问题：找出工作岗位是manager和salesman的员工
+	mysql> select ename,job from emp where job = 'manager' or job = 'salesman';
+	+--------+----------+
+	| ename  | job      |
+	+--------+----------+
+	| ALLEN  | SALESMAN |
+	| WARD   | SALESMAN |
+	| JONES  | MANAGER  |
+	| MARTIN | SALESMAN |
+	| BLAKE  | MANAGER  |
+	| CLARK  | MANAGER  |
+	| TURNER | SALESMAN |
+	+--------+----------+
+	7 rows in set (0.00 sec)
+
+	and、or联合应用：找出薪资大于3000的并且部门编号是20或30部门的员工
+	mysql> select ename,sal,deptno from emp where sal > 1000 and deptno = 20 or deptno = 30;
+	+--------+---------+--------+
+	| ename  | sal     | deptno |
+	+--------+---------+--------+
+	| ALLEN  | 1600.00 |     30 |
+	| WARD   | 1250.00 |     30 |
+	| JONES  | 2975.00 |     20 |
+	| MARTIN | 1250.00 |     30 |
+	| BLAKE  | 2850.00 |     30 |
+	| SCOTT  | 3000.00 |     20 |
+	| TURNER | 1500.00 |     30 |
+	| ADAMS  | 1100.00 |     20 |
+	| JAMES  |  950.00 |     30 |//有问题，and、or碰到一起会有问题
+	| FORD   | 3000.00 |     20 |
+	+--------+---------+--------+
+	10 rows in set (0.00 sec)
+
+	//正确
+	mysql> select ename,sal,deptno from emp where sal > 1000 and (deptno = 20 or deptno = 30);
+	+--------+---------+--------+
+	| ename  | sal     | deptno |
+	+--------+---------+--------+
+	| ALLEN  | 1600.00 |     30 |
+	| WARD   | 1250.00 |     30 |
+	| JONES  | 2975.00 |     20 |
+	| MARTIN | 1250.00 |     30 |
+	| BLAKE  | 2850.00 |     30 |
+	| SCOTT  | 3000.00 |     20 |
+	| TURNER | 1500.00 |     30 |
+	| ADAMS  | 1100.00 |     20 |
+	| FORD   | 3000.00 |     20 |
+	+--------+---------+--------+
+	9 rows in set (0.00 sec)
+	注意：当运算符优先级不确定的时候加小括号
+
+	in等同于or：找出工作岗位是manager和salesman的员工
+	mysql> select ename,job from emp where job in ('manager','salesman');//可读性更好
+	+--------+----------+
+	| ename  | job      |
+	+--------+----------+
+	| ALLEN  | SALESMAN |
+	| WARD   | SALESMAN |
+	| JONES  | MANAGER  |
+	| MARTIN | SALESMAN |
+	| BLAKE  | MANAGER  |
+	| CLARK  | MANAGER  |
+	| TURNER | SALESMAN |
+	+--------+----------+
+	7 rows in set (0.00 sec)
+
+	mysql> select ename,sal from emp where sal in (1000,3000);//不是区间，是1000或者3000的，不是1000-3000，是具体的值
+	+-------+---------+
+	| ename | sal     |
+	+-------+---------+
+	| SCOTT | 3000.00 |
+	| FORD  | 3000.00 |
+	+-------+---------+
+	2 rows in set (0.00 sec)
+
+	not in：不在这几个值当中
+	mysql> select ename,sal,job from emp where sal not in (3000,5000);
+	+--------+---------+----------+
+	| ename  | sal     | job      |
+	+--------+---------+----------+
+	| SMITH  |  800.00 | CLERK    |
+	| ALLEN  | 1600.00 | SALESMAN |
+	| WARD   | 1250.00 | SALESMAN |
+	| JONES  | 2975.00 | MANAGER  |
+	| MARTIN | 1250.00 | SALESMAN |
+	| BLAKE  | 2850.00 | MANAGER  |
+	| CLARK  | 2450.00 | MANAGER  |
+	| TURNER | 1500.00 | SALESMAN |
+	| ADAMS  | 1100.00 | CLERK    |
+	| JAMES  |  950.00 | CLERK    |
+	| MILLER | 1300.00 | CLERK    |
+	+--------+---------+----------+
+	11 rows in set (0.00 sec)
+	not用于is或者in
+
+14、模糊查询like：找出名字中国含有o的
+	在模糊查询当中，必须掌握两个特殊的符号，百分号%任意多个字符、下划线_任意一个字符
+	mysql> select ename from emp where ename like '%o%';
+	+-------+
+	| ename |
+	+-------+
+	| JONES |
+	| SCOTT |
+	| FORD  |
+	+-------+
+	3 rows in set (0.00 sec)
+
+	找出第二个字母是‘A’的：
+	mysql> select ename from emp where ename like '_A%';
+	+--------+
+	| ename  |
+	+--------+
+	| WARD   |
+	| MARTIN |
+	| JAMES  |
+	+--------+
+	3 rows in set (0.00 sec)
+	找出名字中有下划线的：
+	select ename from emp where ename like ‘%\_%’；//转义成普通下划线
+
+	找出名字中最后一个字母是t的：
+	mysql> select ename from emp where ename like '%T';
+	+-------+
+	| ename |
+	+-------+
+	| SCOTT |//Oracle当中有一个用户scott，密码是tiger，mysql是root（超管），888
+	+-------+
+	1 row in set (0.00 sec)
+15、排序
+	升序/降序
+	mysql> select ename,sal from emp order by sal;
+	+--------+---------+
+	| ename  | sal     |
+	+--------+---------+
+	| SMITH  |  800.00 |
+	| JAMES  |  950.00 |
+	| ADAMS  | 1100.00 |
+	| WARD   | 1250.00 |
+	| MARTIN | 1250.00 |
+	| MILLER | 1300.00 |
+	| TURNER | 1500.00 |
+	| ALLEN  | 1600.00 |
+	| CLARK  | 2450.00 |
+	| BLAKE  | 2850.00 |
+	| JONES  | 2975.00 |
+	| FORD   | 3000.00 |
+	| SCOTT  | 3000.00 |
+	| KING   | 5000.00 |
+	+--------+---------+
+	14 rows in set (0.09 sec)
+	//指定升序/降序：asc升序，desc降序
+	mysql> select ename,sal from emp order by sal asc;//升序
+	+--------+---------+
+	| ename  | sal     |
+	+--------+---------+
+	| SMITH  |  800.00 |
+	| JAMES  |  950.00 |
+	| ADAMS  | 1100.00 |
+	| WARD   | 1250.00 |
+	| MARTIN | 1250.00 |
+	| MILLER | 1300.00 |
+	| TURNER | 1500.00 |
+	| ALLEN  | 1600.00 |
+	| CLARK  | 2450.00 |
+	| BLAKE  | 2850.00 |
+	| JONES  | 2975.00 |
+	| FORD   | 3000.00 |
+	| SCOTT  | 3000.00 |
+	| KING   | 5000.00 |
+	+--------+---------+
+	14 rows in set (0.00 sec)
+
+	mysql> select ename,sal from emp order by sal desc;//降序
+	+--------+---------+
+	| ename  | sal     |
+	+--------+---------+
+	| KING   | 5000.00 |
+	| SCOTT  | 3000.00 |
+	| FORD   | 3000.00 |
+	| JONES  | 2975.00 |
+	| BLAKE  | 2850.00 |
+	| CLARK  | 2450.00 |
+	| ALLEN  | 1600.00 |
+	| TURNER | 1500.00 |
+	| MILLER | 1300.00 |
+	| MARTIN | 1250.00 |
+	| WARD   | 1250.00 |
+	| ADAMS  | 1100.00 |
+	| JAMES  |  950.00 |
+	| SMITH  |  800.00 |
+	+--------+---------+
+	s14 rows in set (0.00 sec)
+	//按照工资的降序排，工资一样的按照名字升序排
+	mysql> select * from emp order by sal desc,ename asc;//越靠前的字段的主导作用更强，前面的相同无法完成排序的时候才会启动后面的
+	+-------+--------+-----------+------+------------+---------+---------+--------+
+	| EMPNO | ENAME  | JOB       | MGR  | HIREDATE   | SAL     | COMM    | DEPTNO |
+	+-------+--------+-----------+------+------------+---------+---------+--------+
+	|  7839 | KING   | PRESIDENT | NULL | 1981-11-17 | 5000.00 |    NULL |     10 |
+	|  7902 | FORD   | ANALYST   | 7566 | 1981-12-03 | 3000.00 |    NULL |     20 |
+	|  7788 | SCOTT  | ANALYST   | 7566 | 1987-04-19 | 3000.00 |    NULL |     20 |
+	|  7566 | JONES  | MANAGER   | 7839 | 1981-04-02 | 2975.00 |    NULL |     20 |
+	|  7698 | BLAKE  | MANAGER   | 7839 | 1981-05-01 | 2850.00 |    NULL |     30 |
+	|  7782 | CLARK  | MANAGER   | 7839 | 1981-06-09 | 2450.00 |    NULL |     10 |
+	|  7499 | ALLEN  | SALESMAN  | 7698 | 1981-02-20 | 1600.00 |  300.00 |     30 |
+	|  7844 | TURNER | SALESMAN  | 7698 | 1981-09-08 | 1500.00 |    0.00 |     30 |
+	|  7934 | MILLER | CLERK     | 7782 | 1982-01-23 | 1300.00 |    NULL |     10 |
+	|  7654 | MARTIN | SALESMAN  | 7698 | 1981-09-28 | 1250.00 | 1400.00 |     30 |
+	|  7521 | WARD   | SALESMAN  | 7698 | 1981-02-22 | 1250.00 |  500.00 |     30 |
+	|  7876 | ADAMS  | CLERK     | 7788 | 1987-05-23 | 1100.00 |    NULL |     20 |
+	|  7900 | JAMES  | CLERK     | 7698 | 1981-12-03 |  950.00 |    NULL |     30 |
+	|  7369 | SMITH  | CLERK     | 7902 | 1980-12-17 |  800.00 |    NULL |     20 |
+	+-------+--------+-----------+------+------------+---------+---------+--------+
+	14 rows in set (0.00 sec)
+	mysql> select ename,sal from emp order by 2;//表示第2列，但不够健壮
+	+--------+---------+
+	| ename  | sal     |
+	+--------+---------+
+	| SMITH  |  800.00 |
+	| JAMES  |  950.00 |
+	| ADAMS  | 1100.00 |
+	| WARD   | 1250.00 |
+	| MARTIN | 1250.00 |
+	| MILLER | 1300.00 |
+	| TURNER | 1500.00 |
+	| ALLEN  | 1600.00 |
+	| CLARK  | 2450.00 |
+	| BLAKE  | 2850.00 |
+	| JONES  | 2975.00 |
+	| FORD   | 3000.00 |
+	| SCOTT  | 3000.00 |
+	| KING   | 5000.00 |
+	+--------+---------+
+	14 rows in set (0.00 sec)
+
+	找出工作是manager的员工工资按照升序排，工资相同按照名字降序排
+	mysql> select ename,sal,job from emp where job = 'manager' order by sal asc,ename desc;
+	+-------+---------+---------+
+	| ename | sal     | job     |
+	+-------+---------+---------+
+	| CLARK | 2450.00 | MANAGER |
+	| BLAKE | 2850.00 | MANAGER |
+	| JONES | 2975.00 | MANAGER |
+	+-------+---------+---------+
+	3 rows in set (0.00 sec)
+
+	mysql> select ename,sal,job from emp where job = 'salesman' order by sal desc,ename asc;
+	+--------+---------+----------+
+	| ename  | sal     | job      |
+	+--------+---------+----------+
+	| ALLEN  | 1600.00 | SALESMAN |
+	| TURNER | 1500.00 | SALESMAN |
+	| MARTIN | 1250.00 | SALESMAN |
+	| WARD   | 1250.00 | SALESMAN |
+	+--------+---------+----------+
+	4 rows in set (0.00 sec)
+	
+	3 select *
+	1 from 表名
+	2 where 条件
+	4 order by
+	   ……
+	
+16、分组函数
+	count 计数
+	sum 求和
+	avg 平均值
+	max 最大值
+	min 最小值
+	所有的分组函数都是对某一组数据进行操作的
+	//找出员工的工资总和
+	mysql> select sum(sal) from emp;
+	+----------+
+	| sum(sal) |
+	+----------+
+	| 29025.00 |
+	+----------+
+	1 row in set (0.00 sec)
+	//找出最高工资
+	mysql> select max(sal) from emp;
+	+----------+
+	| max(sal) |
+	+----------+
+	|  5000.00 |
+	+----------+
+	1 row in set (0.00 sec)
+
+	mysql> select min(sal) from emp;
+	+----------+
+	| min(sal) |
+	+----------+
+	|   800.00 |
+	+----------+
+	1 row in set (0.00 sec)
+	mysql> select avg(sal) from emp;
+	+-------------+
+	| avg(sal)    |
+	+-------------+
+	| 2073.214286 |
+	+-------------+
+	1 row in set (0.00 sec)
+
+	mysql> select count(ename) from emp;
+	+--------------+
+	| count(ename) |
+	+--------------+
+	|           14 |
+	+--------------+
+	1 row in set (0.00 sec)
+	mysql> select count(*) from emp;
+	+----------+
+	| count(*) |
+	+----------+
+	|       14 |
+	+----------+
+	1 row in set (0.00 sec)
+	分组函数一共5个，分组函数还有另一个名字，叫多行处理函数，即输入多行，输出一行，有一个特点
+	分组函数自动忽略空：
+	mysql> select ename,min(comm) from emp;
+	+-------+-----------+
+	| ename | min(comm) |
+	+-------+-----------+
+	| SMITH |      0.00 |
+	+-------+-----------+
+	1 row in set (0.00 sec)
+	mysql> select count(comm) from emp;
+	+-------------+
+	| count(comm) |
+	+-------------+
+	|           4 |
+	+-------------+
+	1 row in set (0.00 sec)
+17、单行处理函数
+	什么是单行处理函数，输入一行，输出一行，计算每个员工的年薪select ename，（sal+comm）*12 as yearsal from emp；
+	出现空是因为comm为空，SQL中有一个规定，只要数学表达式中出现null，不管运算关系是什么，结果都为null，所有数据库都是这样规定的
+	mysql> select ename,(sal+comm)*12 as yearsal from emp;
+	+--------+----------+
+	| ename  | yearsal  |
+	+--------+----------+
+	| SMITH  |     NULL |
+	| ALLEN  | 22800.00 |
+	| WARD   | 21000.00 |
+	| JONES  |     NULL |
+	| MARTIN | 31800.00 |
+	| BLAKE  |     NULL |
+	| CLARK  |     NULL |
+	| SCOTT  |     NULL |
+	| KING   |     NULL |
+	| TURNER | 18000.00 |
+	| ADAMS  |     NULL |
+	| JAMES  |     NULL |
+	| FORD   |     NULL |
+	| MILLER |     NULL |
+	+--------+----------+
+	14 rows in set (0.00 sec)
+	
+	那怎么计算年薪呢？用ifnull（可能为null的数据，被当作什么处理）空值处理函数，也是单行处理函数
+	mysql> select ename,(sal+ifnull(comm,0.00))*12 as yearsal from emp;
+	+--------+----------+
+	| ename  | yearsal  |
+	+--------+----------+
+	| SMITH  |  9600.00 |
+	| ALLEN  | 22800.00 |
+	| WARD   | 21000.00 |
+	| JONES  | 35700.00 |
+	| MARTIN | 31800.00 |
+	| BLAKE  | 34200.00 |
+	| CLARK  | 29400.00 |
+	| SCOTT  | 36000.00 |
+	| KING   | 60000.00 |
+	| TURNER | 18000.00 |
+	| ADAMS  | 13200.00 |
+	| JAMES  | 11400.00 |
+	| FORD   | 36000.00 |
+	| MILLER | 15600.00 |
+	+--------+----------+
+	14 rows in set (0.00 sec)
+
+	mysql> select ename,ifnull(comm,0.00) as comm from emp;
+	+--------+---------+
+	| ename  | comm    |
+	+--------+---------+
+	| SMITH  |    0.00 |
+	| ALLEN  |  300.00 |
+	| WARD   |  500.00 |
+	| JONES  |    0.00 |
+	| MARTIN | 1400.00 |
+	| BLAKE  |    0.00 |
+	| CLARK  |    0.00 |
+	| SCOTT  |    0.00 |
+	| KING   |    0.00 |
+	| TURNER |    0.00 |
+	| ADAMS  |    0.00 |
+	| JAMES  |    0.00 |
+	| FORD   |    0.00 |
+	| MILLER |    0.00 |
+	+--------+---------+
+	14 rows in set (0.00 sec)
+
+	分组函数自动忽略空，所以以下计算值为0，否则计算值为null
+	mysql> select sum(comm) from emp;
+	+-----------+
+	| sum(comm) |
+	+-----------+
+	|   2200.00 |
+	+-----------+
+	s1 row in set (0.00 sec)
+	select sum(comm) from emp /*where comm is not null*/;画蛇添足，因为sum会忽略null值，没有看在眼里，所以不用额外添加过滤条件
+
+	
+is（not）null、in、order by，asc，desc，like（%、_），分组函数：count，avg，max，min，sum，会自动忽略null，多行处理函数，ifnull（可能为null的字段，为null之后代替的数值）单行处理函数
+
+
+18、count所有和count某个字段的区别：
+	找出工资高于平均工资的员工：mysql> select ename,sal from emp where sal > avg(sal);
+	ERROR 1111 (HY000): Invalid use of group function//无效使用了分组函数，原因是sql中分组函数不可直接使用在where子句当中？？？
+	mysql> select ename,sal>avg(sal) from emp;
+
+	两个重点：分组函数自动忽略null，分组函数不能直接出现在where子句
+
+	count(*)：总记录条数
+	count(字段)：某字段中不为null的元素
+	分组函数可以组合使用
+	mysql> select count(*),sum(sal),max(sal),min(sal) from emp;
+	+----------+----------+----------+----------+
+	| count(*) | sum(sal) | max(sal) | min(sal) |
+	+----------+----------+----------+----------+
+	|       14 | 29025.00 |  5000.00 |   800.00 |
+	+----------+----------+----------+----------+
+	1 row in set (0.00 sec)
+
+19、group by & having
+	group by ：按照某些字段进行分组
+	having ：对分组之后的数据再次过滤
+	//找出每个工作岗位的最高薪资
+	mysql> select job,max(sal) from emp group by job;
+	+-----------+----------+
+	| job       | max(sal) |
+	+-----------+----------+
+	| ANALYST   |  3000.00 |
+	| CLERK     |  1300.00 |
+	| MANAGER   |  2975.00 |
+	| PRESIDENT |  5000.00 |
+	| SALESMAN  |  1600.00 |
+	+-----------+----------+
+	5 rows in set (0.00 sec)
+	注意：分组函数一般都会和group by联合使用，也是为什么被称为分组函数的原因，而且分组函数必须在group by执行之后执行，当一条sql语句		没有group by的话，整张表的数据会自成一组
+	所以分组函数不能在where中直接使用，因为where执行在group by之前，与分组函数必须在group by执行之后执行矛盾，所以是where到group by 	到分组函数
+	select		5
+	……
+	from		1
+	……
+	where		2
+	……
+	group by	3
+	……
+	having		4
+	……
+	order by	6
+	……
+	
+	//找出工资高于平均工资的员工：
+	mysql> select ename,sal from emp where sal > (select avg(sal) from emp);//子查询，select嵌套select
+	+-------+---------+
+	| ename | sal     |
+	+-------+---------+
+	| JONES | 2975.00 |
+	| BLAKE | 2850.00 |
+	| CLARK | 2450.00 |
+	| SCOTT | 3000.00 |
+	| KING  | 5000.00 |
+	| FORD  | 3000.00 |
+	+-------+---------+
+	6 rows in set (0.00 sec)
+
+20、多字段分组查询
+	mysql> select ename,job,max(sal) from emp group by job;//在Oracle里面会报错，语法规则更严谨
+	+-------+-----------+----------+
+	| ename | job       | max(sal) |
+	+-------+-----------+----------+
+	| SCOTT | ANALYST   |  3000.00 |
+	| SMITH | CLERK     |  1300.00 |
+	| JONES | MANAGER   |  2975.00 |
+	| KING  | PRESIDENT |  5000.00 |
+	| ALLEN | SALESMAN  |  1600.00 |
+	+-------+-----------+----------+
+	5 rows in set (0.00 sec)//可以查询，但结果不是我们想要的，结果错误
+	所以在查询语句里面出现group by的时候，select后面只能出现分组函数和参与分组的字段
+
+	//每个工作的平均工资
+	mysql> select avg(sal),job from emp group by job;
+	+-------------+-----------+
+	| avg(sal)    | job       |
+	+-------------+-----------+
+	| 3000.000000 | ANALYST   |
+	| 1037.500000 | CLERK     |
+	| 2758.333333 | MANAGER   |
+	| 5000.000000 | PRESIDENT |
+	| 1400.000000 | SALESMAN  |
+	+-------------+-----------+
+	5 rows in set (0.00 sec)
+	
+	//多个字段联合分组，找出每个部门不同工作岗位的最高薪资
+	mysql> select job,max(sal),deptno from emp group by deptno,job;
+	+-----------+----------+--------+
+	| job       | max(sal) | deptno |
+	+-----------+----------+--------+
+	| CLERK     |  1300.00 |     10 |
+	| MANAGER   |  2450.00 |     10 |
+	| PRESIDENT |  5000.00 |     10 |
+	| ANALYST   |  3000.00 |     20 |
+	| CLERK     |  1100.00 |     20 |
+	| MANAGER   |  2975.00 |     20 |
+	| CLERK     |   950.00 |     30 |
+	| MANAGER   |  2850.00 |     30 |
+	| SALESMAN  |  1600.00 |     30 |
+	+-----------+----------+--------+
+	9 rows in set (0.00 sec)
+	//找出每个部门的最高薪资，要求显示薪资大于2900
+	mysql> select max(sal),deptno from emp group by deptno having max(sal) > 2900;//having过滤，对于group by过滤结果不满意，是group
+	by 的搭档 只能与group by搭配使用，但能不用尽量不用，尽量在where之后过滤
+	+----------+--------+
+	| max(sal) | deptno |
+	+----------+--------+
+	|  5000.00 |     10 |
+	|  3000.00 |     20 |
+	+----------+--------+
+	2 rows in set (0.00 sec)//效率较低
+
+	mysql> select max(sal),deptno from emp where sal > 2900 group by deptno;//提前过滤，效率较高
+	+----------+--------+
+	| max(sal) | deptno |
+	+----------+--------+
+	|  5000.00 |     10 |
+	|  3000.00 |     20 |
+	+----------+--------+
+	2 rows in set (0.00 sec)
+
+	//where搞不定就使用having
+	//找出每个部门的平均薪资，要求显示平均薪资大于两千的
+	mysql> select deptno,avg(sal) from emp group by deptno having avg(sal) > 2000;
+	+--------+-------------+
+	| deptno | avg(sal)    |
+	+--------+-------------+
+	|     10 | 2916.666667 |
+	|     20 | 2175.000000 |
+	+--------+-------------+
+	2 rows in set (0.00 sec)
+	总结完整的DQL语句怎么写（单表）：有些可以省略，但顺序不能颠倒
+	select（有group by时只能加分组函数和被分组的字段）	5
+	……
+	from							1
+	……
+	where（不能加分组函数，条件查询，模糊查询）		2
+	……
+	group by						3
+	……
+	having（对 group by结果不满意进行过滤）			4
+	……
+	order by（排序，asc，desc）				6
+	……
+21、关于查询结果集的去重：distinct关键字//去除重复记录	
+	mysql> select distinct job from emp;
+	+-----------+
+	| job       |
+	+-----------+
+	| CLERK     |
+	| SALESMAN  |
+	| MANAGER   |
+	| ANALYST   |
+	| PRESIDENT |
+	+-----------+
+	5 rows in set (0.00 sec)
+
+	mysql> select distinct sal from emp;
+	+---------+
+	| sal     |
+	+---------+
+	|  800.00 |
+	| 1600.00 |
+	| 1250.00 |
+	| 2975.00 |
+	| 2850.00 |
+	| 2450.00 |
+	| 3000.00 |
+	| 5000.00 |
+	| 1500.00 |
+	| 1100.00 |
+	|  950.00 |
+	| 1300.00 |
+	+---------+
+	12 rows in set (0.00 sec)
+
+	mysql> select ename,distinct sal from emp;//distinct关键字只能出现在所有字段最前面
+	ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for 		the right syntax to use near 'distinct sal from emp' at line 1
+
+	//联合去重，sal和ename都一样才算重复
+	mysql> select distinct sal,ename from emp;
+	+---------+--------+
+	| sal     | ename  |
+	+---------+--------+
+	|  800.00 | SMITH  |
+	| 1600.00 | ALLEN  |
+	| 1250.00 | WARD   |
+	| 2975.00 | JONES  |
+	| 1250.00 | MARTIN |
+	| 2850.00 | BLAKE  |
+	| 2450.00 | CLARK  |
+	| 3000.00 | SCOTT  |
+	| 5000.00 | KING   |
+	| 1500.00 | TURNER |
+	| 1100.00 | ADAMS  |
+	|  950.00 | JAMES  |
+	| 3000.00 | FORD   |
+	| 1300.00 | MILLER |
+	+---------+--------+
+	14 rows in set (0.00 sec)
+	mysql> select distinct job,deptno from emp;
+	+-----------+--------+
+	| job       | deptno |
+	+-----------+--------+
+	| CLERK     |     20 |
+	| SALESMAN  |     30 |
+	| MANAGER   |     20 |
+	| MANAGER   |     30 |
+	| MANAGER   |     10 |
+	| ANALYST   |     20 |
+	| PRESIDENT |     10 |
+	| CLERK     |     30 |
+	| CLERK     |     10 |
+	+-----------+--------+
+	9 rows in set (0.00 sec)
+	//统计岗位的数量
+	mysql> select count(distinct job) from emp;
+	+---------------------+
+	| count(distinct job) |
+	+---------------------+
+	|                   5 |
+	+---------------------+
+	1 row in set (0.00 sec)
+
+
+
+
+
+	
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+

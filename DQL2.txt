@@ -1,0 +1,553 @@
+1、连接查询
+	在实际开发中大部分情况下都不是从单表中查询数据，一般都是多张表联合查询取出最终的结果，实际开发中一般一个业务会对应多张表，比如	学生和班级，如果存到一张表中会导致数据的冗余，数据会存在大量的重复
+2、连接查询的分类
+	根据语法出现的年代来划分，包括：
+	sql92（一些老的DBA（数据库管理员）可能还在使用）
+	sql99（比较新1999年）
+	根据表的连接方式来划分：
+	内连接：等值连接、非等值连接、自连接
+	外连接：左外连接、右外连接
+	全连接：（很少用）
+3、在表的连接查询方面有一种现象：笛卡尔积现象
+	案例：找出每一个员工的部门名称，要求显示员工名和部门名 没有条件约束：14*4
+	mysql> select ename,dname from emp,dept;
+	+--------+------------+
+	| ename  | dname      |
+	+--------+------------+
+	| SMITH  | ACCOUNTING |
+	| SMITH  | RESEARCH   |
+	| SMITH  | SALES      |
+	| SMITH  | OPERATIONS |
+	| ALLEN  | ACCOUNTING |
+	| ALLEN  | RESEARCH   |
+	| ALLEN  | SALES      |
+	| ALLEN  | OPERATIONS |
+	| WARD   | ACCOUNTING |
+	| WARD   | RESEARCH   |
+	| WARD   | SALES      |
+	| WARD   | OPERATIONS |
+		……
+	笛卡尔积：当两张表进行连接查询的时候，没有任何条件限制，最后的查询记录结果条数是两张表的记录条数的乘积
+	关于表的别名：表的别名使得执行效率高，可读性好
+	mysql> select e.ename,d.dname from emp e,dept d;
+
+4、怎么避免笛卡尔积现象
+	加条件进行过滤：避免了笛卡尔积现象会减少记录的匹配次数吗？不会，底层匹配次数还是56，但显示的是有效记录，执行效率并没有提高
+	案例：找出每一个员工的部门名称，要求显示员工名和部门名 没有条件约束：14*4
+	mysql> select e.ename,d.dname from emp e,dept d where e.deptno = d.deptno;//以后不用，sql92老语法
+	+--------+------------+
+	| ename  | dname      |
+	+--------+------------+
+	| CLARK  | ACCOUNTING |
+	| KING   | ACCOUNTING |
+	| MILLER | ACCOUNTING |
+	| SMITH  | RESEARCH   |
+	| JONES  | RESEARCH   |
+	| SCOTT  | RESEARCH   |
+	| ADAMS  | RESEARCH   |
+	| FORD   | RESEARCH   |
+	| ALLEN  | SALES      |
+	| WARD   | SALES      |
+	| MARTIN | SALES      |
+	| BLAKE  | SALES      |
+	| TURNER | SALES      |
+	| JAMES  | SALES      |
+	+--------+------------+
+	14 rows in set (0.01 sec)
+	//匹配次数一样是56，但匹配之后只筛选出满足条件的
+
+5、内连接中的等值连接
+	最大的特点是等量关系
+	mysql> select e.ename,d.dname from emp e,dept d where e.deptno = d.deptno;//以后不用，sql92老语法
+	+--------+------------+
+	| ename  | dname      |
+	+--------+------------+
+	| CLARK  | ACCOUNTING |
+	| KING   | ACCOUNTING |
+	| MILLER | ACCOUNTING |
+	| SMITH  | RESEARCH   |
+	| JONES  | RESEARCH   |
+	| SCOTT  | RESEARCH   |
+	| ADAMS  | RESEARCH   |
+	| FORD   | RESEARCH   |
+	| ALLEN  | SALES      |
+	| WARD   | SALES      |
+	| MARTIN | SALES      |
+	| BLAKE  | SALES      |
+	| TURNER | SALES      |
+	| JAMES  | SALES      |
+	+--------+------------+
+	14 rows in set (0.01 sec)
+		
+	//sql99
+	mysql> select e.ename,d.dname from emp e （inner） join dept d on d.deptno = e.deptno;
+	+--------+------------+
+	| ename  | dname      |
+	+--------+------------+
+	| CLARK  | ACCOUNTING |
+	| KING   | ACCOUNTING |
+	| MILLER | ACCOUNTING |
+	| SMITH  | RESEARCH   |
+	| JONES  | RESEARCH   |
+	| SCOTT  | RESEARCH   |
+	| ADAMS  | RESEARCH   |
+	| FORD   | RESEARCH   |
+	| ALLEN  | SALES      |
+	| WARD   | SALES      |
+	| MARTIN | SALES      |
+	| BLAKE  | SALES      |
+	| TURNER | SALES      |
+	| JAMES  | SALES      |
+	+--------+------------+
+	14 rows in set (0.00 sec)
+	…… A表 join B表 on 连接条件 where ……//保留了where过滤，结构更清晰，表的连接条件和后来的where条件分离了，条件是等量关系，所		以是等值连接，省略了inner，带着inner可读性更好
+6、内连接之非等值连接，连接条件中的关系是非等值关系
+	//找出每个员工的工资等级，要求显示员工名、工资、工资等级
+	mysql> select s.grade,e.ename,e.sal from emp e join salgrade s on e.sal between s.losal and s.hisal;
+	+-------+--------+---------+
+	| grade | ename  | sal     |
+	+-------+--------+---------+
+	|     1 | SMITH  |  800.00 |
+	|     3 | ALLEN  | 1600.00 |
+	|     2 | WARD   | 1250.00 |
+	|     4 | JONES  | 2975.00 |
+	|     2 | MARTIN | 1250.00 |
+	|     4 | BLAKE  | 2850.00 |
+	|     4 | CLARK  | 2450.00 |
+	|     4 | SCOTT  | 3000.00 |
+	|     5 | KING   | 5000.00 |
+	|     3 | TURNER | 1500.00 |
+	|     1 | ADAMS  | 1100.00 |
+	|     1 | JAMES  |  950.00 |
+	|     4 | FORD   | 3000.00 |
+	|     2 | MILLER | 1300.00 |
+	+-------+--------+---------+
+	14 rows in set (0.00 sec)
+	//同样join可以省略
+
+7、自连接：最大的特点是一些表看作两张表
+	//找出每个员工的上级领导，要求显示员工名和对应的领导名
+	mysql> select e1.ename,e2.ename as mname from emp e1 join emp e2 on e1.mgr = e2.empno;表的自连接也可以用非等量关系 
+	+--------+-------+
+	| ename  | mname |
+	+--------+-------+
+	| SMITH  | FORD  |
+	| ALLEN  | BLAKE |
+	| WARD   | BLAKE |
+	| JONES  | KING  |
+	| MARTIN | BLAKE |
+	| BLAKE  | KING  |
+	| CLARK  | KING  |
+	| SCOTT  | JONES |
+	| TURNER | BLAKE |
+	| ADAMS  | SCOTT |
+	| JAMES  | BLAKE |
+	| FORD   | JONES |
+	| MILLER | CLARK |
+	+--------+-------+
+	13 rows in set (0.00 sec)//KING没有上级领导所以KING不显示
+8、外连接
+	什么是外连接？
+	内连接：A表B表连接，使用内连接，凡是A、B能够匹配的记录查询出来查询，A、B没有主副之分，两张表是平等的
+	外连接：A、B两表进行连接，两张表中有一张表是主表，一张表是副表，主要查询主表中的数据，捎带着查询副表，当副表中的数据没有和主表	中的数据匹配上，副表自动模拟出NULL与之匹配
+	分类：左外连接（左表是主表）、右外连接（右表是主表），左连接有右连接的写法，右连接也会有左连接的写法
+	//找出每个员工的上级领导，所有员工必须全部查询出来
+	
+	mysql> select e.ename,m.ename from emp e inner join emp m on e.mgr = m.empno;
+	+--------+-------+
+	| ename  | ename |
+	+--------+-------+
+	| SMITH  | FORD  |
+	| ALLEN  | BLAKE |
+	| WARD   | BLAKE |
+	| JONES  | KING  |
+	| MARTIN | BLAKE |
+	| BLAKE  | KING  |
+	| CLARK  | KING  |
+	| SCOTT  | JONES |
+	| TURNER | BLAKE |
+	| ADAMS  | SCOTT |
+	| JAMES  | BLAKE |
+	| FORD   | JONES |
+	| MILLER | CLARK |
+	+--------+-------+
+	13 rows in set (0.00 sec)
+
+	mysql> select e.ename,m.ename mname from emp e left join emp m on e.mgr = m.empno;//左外连接
+	+--------+-------+
+	| ename  | mname |
+	+--------+-------+
+	| SMITH  | FORD  |
+	| ALLEN  | BLAKE |
+	| WARD   | BLAKE |
+	| JONES  | KING  |
+	| MARTIN | BLAKE |
+	| BLAKE  | KING  |
+	| CLARK  | KING  |
+	| SCOTT  | JONES |
+	| KING   | NULL  |
+	| TURNER | BLAKE |
+	| ADAMS  | SCOTT |
+	| JAMES  | BLAKE |
+	| FORD   | JONES |
+	| MILLER | CLARK |
+	+--------+-------+
+	14 rows in set (0.00 sec)
+
+	//右外连接
+	mysql> select e.ename,m.ename mname from emp m right join emp e on e.mgr = m.empno;
+	+--------+-------+
+	| ename  | mname |
+	+--------+-------+
+	| SMITH  | FORD  |
+	| ALLEN  | BLAKE |
+	| WARD   | BLAKE |
+	| JONES  | KING  |
+	| MARTIN | BLAKE |
+	| BLAKE  | KING  |
+	| CLARK  | KING  |
+	| SCOTT  | JONES |
+	| KING   | NULL  |
+	| TURNER | BLAKE |
+	| ADAMS  | SCOTT |
+	| JAMES  | BLAKE |
+	| FORD   | JONES |
+	| MILLER | CLARK |
+	+--------+-------+
+	14 rows in set (0.00 sec)
+	//任何一个外连接都有左外连接和右外连接，……left/right （outer） join……，同样可以省略
+	所以区分内连接和外连接的关键是看有没有left/right，有就是外连接，没有就是内连接，有outer和inner为了可读性更好，外连接使用更多
+	
+	外连接最重要的特性就是主表的数据无条件全部查出来
+	//找出哪个部门没有员工
+	mysql> select d.deptno,e.ename from dept d left join emp e on e.deptno = d.deptno;
+	+--------+--------+
+	| deptno | ename  |
+	+--------+--------+
+	|     10 | CLARK  |
+	|     10 | KING   |
+	|     10 | MILLER |
+	|     20 | SMITH  |
+	|     20 | JONES  |
+	|     20 | SCOTT  |
+	|     20 | ADAMS  |
+	|     20 | FORD   |
+	|     30 | ALLEN  |
+	|     30 | WARD   |
+	|     30 | MARTIN |
+	|     30 | BLAKE  |
+	|     30 | TURNER |
+	|     30 | JAMES  |
+	|     40 | NULL   |
+	+--------+--------+
+	15 rows in set (0.00 sec)
+
+	mysql> select d.deptno,e.ename from dept d left join emp e on e.deptno  = d.deptno where e.ename is null;
+	+--------+-------+
+	| deptno | ename |
+	+--------+-------+
+	|     40 | NULL  |
+	+--------+-------+
+	1 row in set (0.00 sec)
+	mysql> select d.deptno,e.ename from dept d left join emp e on e.deptno  = d.deptno where e.deptno is null;
+	+--------+-------+
+	| deptno | ename |
+	+--------+-------+
+	|     40 | NULL  |
+	+--------+-------+
+	1 row in set (0.00 sec)
+9、全连接：几乎不用，既有左连接又有右连接
+10、三张表连接
+	//找出每名员工的部门名称以及工资等级
+	mysql> select e.ename,d.dname,s.grade from emp e join salgrade s join dept d on (e.deptno = d.deptno) and (e.sal between 		s.losal and s.hisal);
+	+--------+------------+-------+
+	| ename  | dname      | grade |
+	+--------+------------+-------+
+	| SMITH  | RESEARCH   |     1 |
+	| ALLEN  | SALES      |     3 |
+	| WARD   | SALES      |     2 |
+	| JONES  | RESEARCH   |     4 |
+	| MARTIN | SALES      |     2 |
+	| BLAKE  | SALES      |     4 |
+	| CLARK  | ACCOUNTING |     4 |
+	| SCOTT  | RESEARCH   |     4 |
+	| KING   | ACCOUNTING |     5 |
+	| TURNER | SALES      |     3 |
+	| ADAMS  | RESEARCH   |     1 |
+	| JAMES  | SALES      |     1 |
+	| FORD   | RESEARCH   |     4 |
+	| MILLER | ACCOUNTING |     2 |
+	+--------+------------+-------+
+	14 rows in set (0.01 sec)
+	//……
+	  A
+	 join
+	  B
+	  on
+	 ……
+	 join
+	  C
+	  on
+	 ……
+	
+	mysql> select e.ename,d.dname,s.grade from emp e join dept d on e.deptno = d.deptno join salgrade s on e.sal between s.losal 		and s.hisal;
+	+--------+------------+-------+
+	| ename  | dname      | grade |
+	+--------+------------+-------+
+	| SMITH  | RESEARCH   |     1 |
+	| ALLEN  | SALES      |     3 |
+	| WARD   | SALES      |     2 |
+	| JONES  | RESEARCH   |     4 |
+	| MARTIN | SALES      |     2 |
+	| BLAKE  | SALES      |     4 |
+	| CLARK  | ACCOUNTING |     4 |
+	| SCOTT  | RESEARCH   |     4 |
+	| KING   | ACCOUNTING |     5 |
+	| TURNER | SALES      |     3 |
+	| ADAMS  | RESEARCH   |     1 |
+	| JAMES  | SALES      |     1 |
+	| FORD   | RESEARCH   |     4 |
+	| MILLER | ACCOUNTING |     2 |
+	+--------+------------+-------+
+	14 rows in set (0.00 sec)
+	//找出每个员工的工资等级、部门名称以及上级领导
+	mysql> select e.ename,s.grade,d.dname,m.ename from emp e left join emp m on e.mgr = m.empno join salgrade s on e.sal between 		s.losal and s.hisal join dept d on d.deptno = e.deptno;
+	+--------+-------+------------+-------+
+	| ename  | grade | dname      | ename |
+	+--------+-------+------------+-------+
+	| SMITH  |     1 | RESEARCH   | FORD  |
+	| ALLEN  |     3 | SALES      | BLAKE |
+	| WARD   |     2 | SALES      | BLAKE |
+	| JONES  |     4 | RESEARCH   | KING  |
+	| MARTIN |     2 | SALES      | BLAKE |
+	| BLAKE  |     4 | SALES      | KING  |
+	| CLARK  |     4 | ACCOUNTING | KING  |
+	| SCOTT  |     4 | RESEARCH   | JONES |
+	| KING   |     5 | ACCOUNTING | NULL  |
+	| TURNER |     3 | SALES      | BLAKE |
+	| ADAMS  |     1 | RESEARCH   | SCOTT |
+	| JAMES  |     1 | SALES      | BLAKE |
+	| FORD   |     4 | RESEARCH   | JONES |
+	| MILLER |     2 | ACCOUNTING | CLARK |
+	+--------+-------+------------+-------+
+	14 rows in set (0.00 sec)
+
+	mysql> select e.ename,s.grade,d.dname,m.ename from emp e left join emp m on e.mgr = m.empno join salgrade s on e.sal between 	s.losal and s.hisal join dept d on d.deptno = e.deptno order by grade;
+		+--------+-------+------------+-------+
+	| ename  | grade | dname      | ename |
+	+--------+-------+------------+-------+
+	| JAMES  |     1 | SALES      | BLAKE |
+	| SMITH  |     1 | RESEARCH   | FORD  |
+	| ADAMS  |     1 | RESEARCH   | SCOTT |
+	| MILLER |     2 | ACCOUNTING | CLARK |
+	| MARTIN |     2 | SALES      | BLAKE |
+	| WARD   |     2 | SALES      | BLAKE |
+	| TURNER |     3 | SALES      | BLAKE |
+	| ALLEN  |     3 | SALES      | BLAKE |
+	| CLARK  |     4 | ACCOUNTING | KING  |
+	| SCOTT  |     4 | RESEARCH   | JONES |
+	| BLAKE  |     4 | SALES      | KING  |
+	| FORD   |     4 | RESEARCH   | JONES |
+	| JONES  |     4 | RESEARCH   | KING  |
+	| KING   |     5 | ACCOUNTING | NULL  |
+	+--------+-------+------------+-------+
+	14 rows in set (0.00 sec)
+11、navicat
+12、子查询
+	//where后面子嵌套查询
+	子查询是select嵌套select语句，被嵌套的select语句是子查询，子查询可以出现在select、from、where后面，where中使用子查询
+	//找出高于平均薪资的员工
+	mysql> select ename,sal from emp where sal > (select avg(sal) from emp);
+	+-------+---------+
+	| ename | sal     |
+	+-------+---------+
+	| JONES | 2975.00 |
+	| BLAKE | 2850.00 |
+	| CLARK | 2450.00 |
+	| SCOTT | 3000.00 |
+	| KING  | 5000.00 |
+	| FORD  | 3000.00 |
+	+-------+---------+
+	6 rows in set (0.00 sec)//注意：where后面不能直接跟分组函数
+
+	
+	//from后面嵌套子查询
+	//找出每个部门平均薪水的薪资等级
+	mysql> select s.grade,d.deptno from (select avg(sal) asal,deptno from emp group by deptno) d join salgrade s on d.asal between 		s.losal and s.hisal;
+	+-------+--------+
+	| grade | deptno |
+	+-------+--------+
+	|     3 |     30 |
+	|     4 |     10 |
+	|     4 |     20 |
+	+-------+--------+
+	3 rows in set (0.00 sec)
+
+	//完善以后
+	mysql> select s.grade avggrade,d.deptno from (select avg(sal) asal,deptno from emp group by deptno) d join salgrade s on d.asal 	between s.losal and s.hisal order by deptno;
+	+----------+--------+
+	| avggrade | deptno |
+	+----------+--------+
+	|        4 |     10 |
+	|        4 |     20 |
+	|        3 |     30 |
+	+----------+--------+
+	3 rows in set (0.00 sec)
+
+	//找出每个部门的平均薪水等级	
+	//第一种
+	mysql> select e.deptno,avg(s.grade) from emp e join salgrade s on e.sal between s.losal and s.hisal group by e.deptno;
+	+--------+--------------+
+	| deptno | avg(s.grade) |
+	+--------+--------------+
+	|     10 |       3.6667 |
+	|     20 |       2.8000 |
+	|     30 |       2.5000 |
+	+--------+--------------+
+	3 rows in set (0.00 sec)
+	//第二种
+	mysql> select ss.deptno,avg(ss.grade) from (select e.ename,s.grade,e.deptno from emp e join salgrade s on e.sal between s.losal 	and s.hisal) ss group by ss.deptno;
+	+--------+---------------+
+	| deptno | avg(ss.grade) |
+	+--------+---------------+
+	|     10 |        3.6667 |
+	|     20 |        2.8000 |
+	|     30 |        2.5000 |
+	+--------+---------------+
+	3 rows in set (0.00 sec)
+
+	//select后面嵌套子查询
+	//找出每个员工所在的部门名称，显示员工名和部门名
+	mysql> select ss.deptno,avg(ss.grade) from (select e.ename,s.grade,e.deptno from emp e join salgrade s on e.sal between s.losal 	and s.hisal) ss group by ss.deptno;
+	+--------+---------------+
+	| deptno | avg(ss.grade) |
+	+--------+---------------+
+	|     10 |        3.6667 |
+	|     20 |        2.8000 |
+	|     30 |        2.5000 |
+	+--------+---------------+
+	3 rows in set (0.00 sec)
+	//或者可以写为：
+	select e.ename,(select d.dname from emp e join dept d on e.deptno = d.deptno) from emp;
+	mysql> select e.ename,(select d.dname from dept d where e.deptno = d.deptno) dept from emp e;
+	+--------+------------+
+	| ename  | dept       |
+	+--------+------------+
+	| SMITH  | RESEARCH   |
+	| ALLEN  | SALES      |
+	| WARD   | SALES      |
+	| JONES  | RESEARCH   |
+	| MARTIN | SALES      |
+	| BLAKE  | SALES      |
+	| CLARK  | ACCOUNTING |
+	| SCOTT  | RESEARCH   |
+	| KING   | ACCOUNTING |
+	| TURNER | SALES      |
+	| ADAMS  | RESEARCH   |
+	| JAMES  | SALES      |
+	| FORD   | RESEARCH   |
+	| MILLER | ACCOUNTING |
+	+--------+------------+
+	14 rows in set (0.00 sec)
+
+13、联合查询（全连接）：union
+	mysql> select ename,job from emp where job = 'manager'
+            -> union
+    	    -> select ename,job from emp where job = 'salesman';
+	+--------+----------+
+	| ename  | job      |
+	+--------+----------+
+	| JONES  | MANAGER  |
+	| BLAKE  | MANAGER  |
+	| CLARK  | MANAGER  |
+	| ALLEN  | SALESMAN |
+	| WARD   | SALESMAN |
+	| MARTIN | SALESMAN |
+	| TURNER | SALESMAN |
+	+--------+----------+
+	7 rows in set (0.00 sec)
+	//相当于求并集，可以将两张不相关的表的数据连在一起显示，第一个查询结果的字段数必须和第二个相同
+
+14、limit及通用分页SQL（重点）
+	limit是MySQL中特有的，其他没有，Oracle中有一个相同的机制叫：rownum
+	limit取结果集中的部分数据
+	语法机制是：limit startIndex（起始位置），length（取几个）
+	//取出工资前五名
+	mysql> select ename,sal from emp order by sal desc limit 0 , 5;
+	+-------+---------+
+	| ename | sal     |
+	+-------+---------+
+	| KING  | 5000.00 |
+	| SCOTT | 3000.00 |
+	| FORD  | 3000.00 |
+	| JONES | 2975.00 |
+	| BLAKE | 2850.00 |
+	+-------+---------+
+	5 rows in set (0.00 sec)
+	//直接写5默认从0开始
+	mysql> select ename,sal from emp order by sal desc limit 5;
+	+-------+---------+
+	| ename | sal     |
+	+-------+---------+
+	| KING  | 5000.00 |
+	| SCOTT | 3000.00 |
+	| FORD  | 3000.00 |
+	| JONES | 2975.00 |
+	| BLAKE | 2850.00 |
+	+-------+---------+
+	5 rows in set (0.00 sec)
+	limit是sql语句最后执行的一个环节
+
+	select							5
+	……
+	from(join on)						1
+	……
+	where(不能直接加分组函数，可以加条件)			2
+	……
+	group by（按照……分组）				3
+	……
+	having（过滤条件，对分组后的结果进一步筛选）		4
+	……
+	order by(asc,desc)					6
+	……
+	limit（从某位开始，取几个，sql特有）				7
+	……；
+
+	//找出工资排名在第四到第九的员工
+	mysql> select ename,sal from emp order by sal desc limit 3,6;
+	+--------+---------+
+	| ename  | sal     |
+	+--------+---------+
+	| JONES  | 2975.00 |
+	| BLAKE  | 2850.00 |
+	| CLARK  | 2450.00 |
+	| ALLEN  | 1600.00 |
+	| TURNER | 1500.00 |
+	| MILLER | 1300.00 |
+	+--------+---------+
+	6 rows in set (0.00 sec)
+
+	//通用的标准分页sql，每页显示三条记录
+	pagesize 每页显示多少条记录，pageNo显示第几页
+
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,340 @@
+1、insert语句插入数据
+	语法格式
+		insert into 表名（字段1，字段2，字段3，……）values（值1，值2，值3，……）
+		要求字段数量和值的数量相同，并且数据类型要对应
+		mysql> insert into t_user (uname) values ('Timmy');
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> select * from t_user;
+	+-------+------+
+	| uname | usex |
+	+-------+------+
+	| Tom   | m    |
+	| Rose  | f    |
+	| Jack  | m    |
+	| Timmy | NULL |
+	+-------+------+
+	4 rows in set (0.00 sec)
+
+	mysql> insert into t_user (uname) values ('Timmy');
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> select * from t_user;
+	+-------+------+
+	| uname | usex |
+	+-------+------+
+	| Tom   | m    |
+	| Rose  | f    |
+	| Jack  | m    |
+	| Timmy | NULL |
+	+-------+------+
+	4 rows in set (0.00 sec)
+
+	mysql> insert into t_user (usex) values('m');
+	Query OK, 1 row affected (0.01 sec)
+
+	mysql> select * from t_user;
+	+-------+------+
+	| uname | usex |
+	+-------+------+
+	| Tom   | m    |
+	| Rose  | f    |
+	| Jack  | m    |
+	| Timmy | NULL |
+	| NULL  | m    |
+	+-------+------+
+	5 rows in set (0.00 sec)
+
+	mysql> insert into t_user (uname,usex) values ('Timmy','f');
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> select * from t_user;
+	+-------+------+
+	| uname | usex |
+	+-------+------+
+	| Tom   | m    |
+	| Rose  | f    |
+	| Jack  | m    |
+	| Timmy | NULL |
+	| NULL  | m    |
+	| Timmy | f    |
+	+-------+------+
+	6 rows in set (0.00 sec)
+	//综上insert只要执行成功就有一条新记录产生，想修改只能update
+
+	mysql> drop table if exists t_user;//删表
+	Query OK, 0 rows affected (0.01 sec)
+
+	mysql> show tables;
+	+-----------------------+
+	| Tables_in_bjpowernode |
+	+-----------------------+
+	| dept                  |
+	| emp                   |
+	| salgrade              |
+	+-----------------------+
+	3 rows in set (0.00 sec)
+
+	mysql> create table t_user(
+   	    -> UNAME varchar(255),
+   	    -> UAGE int,
+   	    -> USEX char(1),
+    	    -> UADDR varchar(255) default 'BeiJing'//没有插入值的话就插入默认值
+    	    -> );
+	Query OK, 0 rows affected (0.01 sec)
+
+	mysql> desc t_user;
+	+-------+--------------+------+-----+---------+-------+
+	| Field | Type         | Null | Key | Default | Extra |
+	+-------+--------------+------+-----+---------+-------+
+	| UNAME | varchar(255) | YES  |     | NULL    |       |
+	| UAGE  | int(11)      | YES  |     | NULL    |       |
+	| USEX  | char(1)      | YES  |     | NULL    |       |
+	| UADDR | varchar(255) | YES  |     | BeiJing |       |
+	+-------+--------------+------+-----+---------+-------+
+	4 rows in set (0.01 sec)
+
+	mysql> insert into t_user (uname,usex) values ('Tonny','f');
+	Query OK, 1 row affected (0.01 sec)
+	mysql> select * from t_user;
+	+-------+------+------+---------+
+	| UNAME | UAGE | USEX | UADDR   |
+	+-------+------+------+---------+
+	| Tonny | NULL | f    | BeiJing |//没有给地址赋值，但地址默认给了‘BeiJing’
+	+-------+------+------+---------+
+	1 row in set (0.00 sec)
+	当一条insert语句执行成功以后，表格中会多一行记录，即使多的这行记录当中某些字段是NULL，后期也没有办法再执行insert语句插入数		据了，只能使用update进行更新
+
+	mysql> insert into t_user values('Rose',55,'f','NewYork');//表名后面的字段列表可以省略，省略的默认添加所有字段的值，且字		段值必须与建表字段顺序一致
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> select * from t_user;
+	+-------+------+------+---------+
+	| UNAME | UAGE | USEX | UADDR   |
+	+-------+------+------+---------+
+	| Tonny | NULL | f    | BeiJing |
+	| Rose  |   55 | f    | NewYork |
+	+-------+------+------+---------+
+	2 rows in set (0.00 sec)
+	mysql> insert into t_user values('Rose','f',55,'NewYork');
+	ERROR 1366 (HY000): Incorrect integer value: 'f' for column 'UAGE' at row 1
+
+	//一次插入多行
+	mysql> insert into t_user values ('Chelly',33,'m','Boston'),('Cindy',29,'f','London');
+	Query OK, 2 rows affected (0.00 sec)
+	Records: 2  Duplicates: 0  Warnings: 0
+2、表的复制
+	语法：
+	create table 表名 as select……（DQL语句）
+	将查询结果当作表创建出来
+
+	mysql> create table t_user1 as select * from t_user;
+	Query OK, 5 rows affected (0.01 sec)
+	Records: 5  Duplicates: 0  Warnings: 0
+
+	mysql> create table t_user2 as select uname,uaddr from t_user ;
+	Query OK, 5 rows affected (0.01 sec)
+	Records: 5  Duplicates: 0  Warnings: 0
+
+	mysql> select * from t_user1;
+	+--------+------+------+---------+
+	| UNAME  | UAGE | USEX | UADDR   |
+	+--------+------+------+---------+
+	| Tonny  | NULL | f    | BeiJing |
+	| Rose   |   55 | f    | NewYork |
+	| Tom    |   26 | f    | Chicago |
+	| Chelly |   33 | m    | Boston  |
+	| Cindy  |   29 | f    | London  |
+	+--------+------+------+---------+
+	5 rows in set (0.00 sec)
+
+	mysql> select * from t_user2;
+	+--------+---------+
+	| uname  | uaddr   |
+	+--------+---------+
+	| Tonny  | BeiJing |
+	| Rose   | NewYork |
+	| Tom    | Chicago |
+	| Chelly | Boston  |
+	| Cindy  | London  |
+	+--------+---------+
+	5 rows in set (0.00 sec)
+
+	mysql> insert into t_user2 select uage,usex from t_user1;//插入也可以通过SQL语句
+	Query OK, 5 rows affected (0.00 sec)
+	Records: 5  Duplicates: 0  Warnings: 0
+
+	mysql> select * from t_user2;
+	+--------+---------+
+	| uname  | uaddr   |
+	+--------+---------+
+	| Tonny  | BeiJing |
+	| Rose   | NewYork |
+	| Tom    | Chicago |
+	| Chelly | Boston  |
+	| Cindy  | London  |
+	| NULL   | f       |
+	| 55     | f       |
+	| 26     | f       |
+	| 33     | m       |
+	| 29     | f       |
+	+--------+---------+
+	10 rows in set (0.00 sec)
+
+3、修改数据：update 
+	语法格式：update 表名 set 字段名1 = 值1，字段名2 = 值2……  where 条件；//注意语法规则，字段赋值之间是逗号，不是and，后期容易写		错
+	注意：没有条件整张表数据全部更新
+	mysql> insert into t_user (uname,uage) values ('Sun',22);
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> select * from t_user;
+	+--------+------+------+---------+
+	| UNAME  | UAGE | USEX | UADDR   |
+	+--------+------+------+---------+
+	| Tonny  | NULL | f    | BeiJing |
+	| Rose   |   55 | f    | NewYork |
+	| Tom    |   26 | f    | Chicago |
+	| Chelly |   33 | m    | Boston  |
+	| Cindy  |   29 | f    | London  |
+	| Sun    |   22 | NULL | BeiJing |
+	+--------+------+------+---------+
+	6 rows in set (0.00 sec)
+
+	mysql> update t_user set usex = 'f',uaddr = 'ShangHai' where uname  = 'Sun';
+	Query OK, 1 row affected (0.01 sec)
+	Rows matched: 1  Changed: 1  Warnings: 0
+
+	mysql> select * from t_user;
+	+--------+------+------+----------+
+	| UNAME  | UAGE | USEX | UADDR    |
+	+--------+------+------+----------+
+	| Tonny  | NULL | f    | BeiJing  |
+	| Rose   |   55 | f    | NewYork  |
+	| Tom    |   26 | f    | Chicago  |
+	| Chelly |   33 | m    | Boston   |
+	| Cindy  |   29 | f    | London   |
+	| Sun    |   22 | f    | ShangHai |
+	+--------+------+------+----------+
+	6 rows in set (0.00 sec)
+
+	//更新整张表，不写条件，可以只更新整张表中的某些字段，也可以更新所有字段
+	mysql> select * from t_user1;
+	+--------+------+---------+
+	| uname  | uage | uaddr   |
+	+--------+------+---------+
+	| Tonny  | NULL | BeiJing |
+	| Rose   |   55 | NewYork |
+	| Tom    |   26 | Chicago |
+	| Chelly |   33 | Boston  |
+	| Cindy  |   29 | London  |
+	+--------+------+---------+
+	5 rows in set (0.00 sec)
+
+	mysql> update t_user1 set uname  = 'Jason',uage = '48';
+	Query OK, 5 rows affected (0.00 sec)
+	Rows matched: 5  Changed: 5  Warnings: 0
+
+	mysql> select * from t_user1;
+	+-------+------+---------+
+	| uname | uage | uaddr   |
+	+-------+------+---------+
+	| Jason |   48 | BeiJing |
+	| Jason |   48 | NewYork |
+	| Jason |   48 | Chicago |
+	| Jason |   48 | Boston  |
+	| Jason |   48 | London  |
+	+-------+------+---------+
+	5 rows in set (0.00 sec)
+
+	mysql> update t_user1 set uaddr = 'GuiYang';
+	Query OK, 5 rows affected (0.00 sec)
+	Rows matched: 5  Changed: 5  Warnings: 0
+		
+	mysql> select * from t_user1;
+	+-------+------+---------+
+	| uname | uage | uaddr   |
+	+-------+------+---------+
+	| Jason |   48 | GuiYang |
+	| Jason |   48 | GuiYang |
+	| Jason |   48 | GuiYang |
+	| Jason |   48 | GuiYang |
+	| Jason |   48 | GuiYang |
+	+-------+------+---------+
+	5 rows in set (0.00 sec)
+
+11、删除数据
+	语法格式：
+	delete from 表名 where 条件；
+	注意：没有条件全部删除
+	mysql> select * from t_user; 
+	+--------+------+------+----------+
+	| UNAME  | UAGE | USEX | UADDR    |
+	+--------+------+------+----------+
+	| Rose   |   55 | f    | NewYork  |
+	| Tom    |   26 | f    | Chicago  |
+	| Chelly |   33 | m    | Boston   |
+	| Cindy  |   29 | f    | London   |
+	| Sun    |   22 | f    | ShangHai |
+	+--------+------+------+----------+
+	5 rows in set (0.00 sec)
+
+	mysql> delete from t_user1;
+	Query OK, 5 rows affected (0.01 sec)
+
+	mysql> show tables;
+	+-----------------------+
+	| Tables_in_bjpowernode |
+	+-----------------------+
+	| dept                  |
+	| emp                   |
+	| salgrade              |
+	| t_user                |
+	| t_user1               |
+	+-----------------------+
+	5 rows in set (0.00 sec)
+
+	mysql> select * from t_user1;
+	Empty set (0.00 sec)	
+	//注意，delete不加条件限制就会删除整张表的记录，但表依然存在，要删除表就用drop
+	mysql> drop table if exists t_user1;
+	Query OK, 0 rows affected (0.01 sec)
+
+	mysql> show tables;
+	+-----------------------+
+	| Tables_in_bjpowernode |
+	+-----------------------+
+	| dept                  |
+	| emp                   |
+	| salgrade              |
+	| t_user                |
+	+-----------------------+
+	4 rows in set (0.00 sec)
+
+	//删除大表：有些表比较大，所以删除需要很长时间，用delete删除效率较低，但可以回滚
+	truncate table 表名；
+	mysql> truncate table t_user1;
+	Query OK, 0 rows affected (0.01 sec)
+
+	mysql> show tables;
+	+-----------------------+
+	| Tables_in_bjpowernode |
+	+-----------------------+
+	| dept                  |
+	| emp                   |
+	| salgrade              |
+	| t_user                |
+	| t_user1               |
+	+-----------------------+
+	5 rows in set (0.00 sec)
+
+	mysql> select * from t_user1;
+	Empty set (0.00 sec)
+	//谨慎使用，被当作DDL命令来处理，所以带table关键字，表被截断，不可以回滚，数据永久丢失
+总结一下：DML一般不带table关键字，因为是对表中数据进行操作，默认对表，而DDL需要table关键字，是对表结构进行操作
+
+
+
+
+
+
+

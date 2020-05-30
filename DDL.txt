@@ -1,0 +1,525 @@
+对于表结构的修改，在实际开发中表一旦设计好，对表的结构进行修改的时候是很少的，一旦修改表结构，就是对之前的设计进行了否定
+即使需要修改表的结构，也可以用工具进行修改，修改表结构不会出现在java代码中，出现的sql包括增删改查
+增删改查（C（Create）R（Retrieve（检索/读取））U（update）D（delete））
+都是对表中数据进行操作
+1、创建表create
+	建表语句的语法各式
+	create table 表名（
+		字段名1 数据类型，
+		字段名1 数据类型，
+		字段名1 数据类型，
+		……
+	）；
+	关于MySQL中字段的常见数据类型：
+	int		整数型（java中int）
+	bigint		长整型（java中的long）
+	float		浮点
+	double		浮点
+	char		定长字符串（String）
+	varchar		可变长字符串（StringBuffer & StringBuilder，动态分配空间，最大为255）
+	date		日期类型（对应java.sql.Date）
+	BLOB		二进制大对象（存储图片、视频等流媒体信息，对应java中的Object）Binary Large Object
+	CLOB		字符大对象（存储较大文本，比如可以存储4G的字符串，对应java中的Object）Character Large Object
+	……
+	
+	重点看char、varchar怎么选择：比如性别出生日期等用char，姓名等用varchar
+	char长度一旦指定，系统就固定分配空间，当某个字段中的数据长度不发生改变的时候，是定长的，采用char，当一个字段的数据长度不确定采		用varchar
+	表名一般在数据库中一般以：t_或者以tbl_开始，命名规范
+	创建用户表：
+	mysql> create table t_user(
+    	-> uname varchar(255),
+    	-> usex char(1)
+    	-> );
+	Query OK, 0 rows affected (0.01 sec)
+
+	mysql> show tables;
+	+-----------------------+
+	| Tables_in_bjpowernode |
+	+-----------------------+
+	| dept                  |
+	| emp                   |
+	| salgrade              |
+	| t_user                |
+	+-----------------------+
+	4 rows in set (0.00 sec)
+
+	创建表加入约束：constraint
+	约束是为了保证表中数据的完整性、有效性、合法性，可以在创建表的时候给相应字段添加约束
+	*非空约束（not null）：指定某一列不能为空，不能为空，可以重复
+	没有表级约束，只有列级约束
+	mysql> create table t_user2(
+    	-> uname varchar(255)，
+    	-> ubirth bigint not null,
+    	-> umother varchar(255)
+    	-> );
+	Query OK, 0 rows affected (0.01 sec)
+
+	mysql> insert into t_user2 (uname,umother) values ('Sun','Zhang');
+	ERROR 1364 (HY000): Field 'ubirth' doesn't have a default value//没有默认值得指定值
+
+	mysql> desc t_user2;
+	+---------+--------------+------+-----+---------+-------+
+	| Field   | Type         | Null | Key | Default | Extra |
+	+---------+--------------+------+-----+---------+-------+
+	| uname   | varchar(255) | YES  |     | NULL    |       |
+	| ubirth  | bigint(20)   | NO   |     | NULL    |       |
+	| umother | varchar(255) | YES  |     | NULL    |       |
+	+---------+--------------+------+-----+---------+-------+
+	3 rows in set (0.01 sec)
+
+
+
+	*唯一约束（unique）：指定一列或几列的值不允许重复，不能重复，可以为空
+	列级约束 & 表级约束：列后面添加 & 定义完字段以后在最后添加，一个字段添加约束可以转为表级约束
+	修饰的字段具有唯一性，不能重复，但可以为null，多个null不是重复，null与null不能划等号
+	mysql> insert t_user3 values(33,'WangYang'),(35,'WangYang');
+	ERROR 1062 (23000): Duplicate entry 'WangYang' for key 'username'
+	mysql> insert t_user3 (id) values (25),(17);
+	Query OK, 2 rows affected (0.01 sec)
+	Records: 2  Duplicates: 0  Warnings: 0
+
+	mysql> select * from t_user3;
+	+------+----------+
+	| id   | username |
+	+------+----------+
+	|   33 | LiGang   |
+	|   25 | NULL     |
+	|   17 | NULL     |
+	+------+----------+
+	3 rows in set (0.00 sec)
+
+	mysql> desc t_user3;
+	+----------+--------------+------+-----+---------+-------+
+	| Field    | Type         | Null | Key | Default | Extra |
+	+----------+--------------+------+-----+---------+-------+
+	| id       | int(11)      | YES  |     | NULL    |       |
+	| username | varchar(255) | YES  | UNI | NULL    |       |
+	+----------+--------------+------+-----+---------+-------+
+	2 rows in set (0.01 sec)
+	//可以为null不能重复，有唯一性可以为null
+
+	//多个字段联合起来唯一
+	create table t_user4(
+	username varchar(255),
+	usercode varchar(255),
+	id int,
+	unique(username,usercode)
+	);
+	
+	mysql> insert into t_user4 values('lisi','111',1),('lisi','222',2),('zhangsan','111',3);
+	Query OK, 3 rows affected (0.00 sec)
+	Records: 3  Duplicates: 0  Warnings: 0
+
+	mysql> select * from t_user4;
+	+----------+----------+------+
+	| username | usercode | id   |
+	+----------+----------+------+
+	| lisi     | 111      |    1 |
+	| lisi     | 222      |    2 |
+	| zhangsan | 111      |    3 |
+	+----------+----------+------+
+	3 rows in set (0.00 sec)
+	//只要username和usercode联合起来唯一就可以，类似于去重的distinct
+
+	and 
+
+	create table t_user4(
+	username varchar(255) unique,
+	usercode varchar(255) unique,
+	id int,
+	);
+	//username和usercode各自唯一，名字或者编号有重复得都不行
+
+	*主键约束（primary key PK）：唯一且非空
+	怎么给一张表添加主键约束：
+	create table t_user5(
+	id int primary key,
+	username varchar(255),
+	email varchar(255)
+	);
+	insert into t_user5 values (1,'zs','zs@qq.com');
+	insert into t_user5 values (2,'ls','ls@qq.com');
+	insert into t_user5 values (3,'ww','ww@qq.com');
+
+	mysql> insert into t_user5 values (1,'ww','ww@qq.com');
+	ERROR 1062 (23000): Duplicate entry '1' for key 'PRIMARY'
+	mysql> insert into t_user5 (username,email)values ('ww','ww@qq.com');
+	ERROR 1364 (HY000): Field 'id' doesn't have a default value
+
+	mysql> desc t_user5;
+	+----------+--------------+------+-----+---------+-------+
+	| Field    | Type         | Null | Key | Default | Extra |
+	+----------+--------------+------+-----+---------+-------+
+	| id       | int(11)      | NO   | PRI | NULL    |       |
+	| username | varchar(255) | YES  |     | NULL    |       |
+	| email    | varchar(255) | YES  |     | NULL    |       |
+	+----------+--------------+------+-----+---------+-------+
+	3 rows in set (0.01 sec)
+	//根据以上的测试可知，id是主键，因为添加了逐渐约束，主键字段中的护具不能为空也不能重复，主键相关的术语：主键约束，主键字段，主		键值
+	主键作用：
+	表的设计三范式中有要求：第一范式要求任何一张表都应该有范式
+	作用：记录的唯一标识，能代表某行记录
+	主键分类：
+	根据主键字段的字段数量来划分：单一主键（推荐，常用） & 复合主键（多个字段联合起来添加一个主键约束，不建议使用，违背三范式）
+	根据逐渐的性质来划分：自然主键（主键最好是一个和业务没有任何关系的自然数）、业务主键（主键值和系统业务挂钩：银行卡卡号，身份证		号码作为主键，不推荐用，最好不要拿着和业务挂钩的字段当主键，因为以后的业务一旦发生改变，主键值也需要发生变化，但有时候	没办法	改变，因为变化可能导致主键重复）
+
+	推荐单一主键的自然主键
+
+	一张表只能有一个主键约束
+	//表级约束
+	create table t_user5(
+	id int,
+	username varchar(255),
+	email varchar(255),
+	primary key(id)
+	);
+	//复合主键，不需要掌握
+	create table t_user5(
+	id int,
+	username varchar(255),
+	email varchar(255),
+	primary key(id,username)
+	);
+
+	//MySQL提供的主键值自增，auto_increment,id字段自动维护一个自增的数字，从1开始，以1递增，只要起到标识作用即可·
+	create table t_user6(
+	id int primary key auto_increment,
+	username varchar(255)
+	);
+	insert into t_user6 (username) values ('a');
+	insert into t_user6 (username) values ('b');
+	insert into t_user6 (username) values ('c');
+	insert into t_user6 (username) values ('d');
+	insert into t_user6 (username) values ('e');
+	insert into t_user6 (username) values ('f');
+
+	mysql> select * from t_user6;
+	+----+----------+
+	| id | username |
+	+----+----------+
+	|  1 | a        |
+	|  2 | b        |
+	|  3 | c        |
+	|  4 | d        |
+	|  5 | e        |
+	|  6 | f        |
+	+----+----------+
+	6 rows in set (0.00 sec)
+	Oracle种自增机制：sequence（序列）
+
+	mysql> create table t_user(
+    	-> uname varchar(255),
+    	-> uid int,
+    	-> uaddr varchar(255),
+    	-> primary key(uname,uid)
+    	-> );
+	Query OK, 0 rows affected (0.01 sec)
+
+	mysql> show tables;
+	+------------------+
+	| Tables_in_school |
+	+------------------+
+	| t_class          |
+	| t_student        |
+	| t_user           |
+	+------------------+
+	3 rows in set (0.00 sec)
+
+	mysql> insert into t_user (uname,uaddr) values ('sunjie','GuiYang');
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> select * from t_user;
+	+--------+-----+---------+
+	| uname  | uid | uaddr   |
+	+--------+-----+---------+
+	| sunjie |   0 | GuiYang |
+	+--------+-----+---------+
+	1 row in set (0.00 sec)
+
+	mysql> insert into t_user (uid,uaddr) values (12,'GuiYang');
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> select * from t_user;
+	+--------+-----+---------+
+	| uname  | uid | uaddr   |
+	+--------+-----+---------+
+	|        |  12 | GuiYang |
+	| sunjie |   0 | GuiYang |
+	+--------+-----+---------+
+	2 rows in set (0.00 sec)
+	//当为复合主键的时候，增加记录如果只添加复合主键中的一个，另一个会向0看齐，并不会为null，因为复合主键也是主键，不允许空也不允许	重复
+
+
+
+
+	*外键约束（foreign key FK）：相关术语，外键字段，外键字段，外键值
+	作用：
+	业务背景：请设计数据库表用来维护班级和学生的信息
+	第一种方案：一张表存所有数据，缺点：冗余
+	第二种方案：班级表（父表）、学生表（子表）
+
+	drop table t_student;
+	drop table t_class;
+
+	create table t_class(
+	cno int primary key,
+	cname varchar(255)
+	);
+
+	create table t_student(
+	sno int primary key auto_increment,
+	sname char(6),
+	classno int,
+	foreign key(classno) references t_class(cno)
+	);
+
+	insert into t_class values ('101','xxxxxxxxxxxxxxxxxxxx'),('102','yyyyyyyyyyyyyyyyyyyy');
+	insert into t_school (sname,classno) values ('zs1',101),('zs2',101),('zs3',102),('zs4',102),('zs5',102),('zs6',102);
+	
+	顺序要求：
+	添加数据先添加父表再添加子表，删除数据先删除子表再删除父表
+	删表先删子表再删除父表，创建先创建父表再创建子表
+
+
+	mysql> create database school;
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> show databases;
+	+--------------------+
+	| Database           |
+	+--------------------+
+	| information_schema |
+	| bjpowernode        |
+	| mysql              |
+	| performance_schema |
+	| school             |
+	| test               |
+	+--------------------+
+	6 rows in set (0.00 sec)
+	mysql> use school;
+	Database changed
+	mysql> source C:\Users\84181\Documents\resources\school.sql
+	Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+	Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+	Query OK, 0 rows affected (0.01 sec)
+
+	Query OK, 0 rows affected (0.01 sec)
+
+	Query OK, 2 rows affected (0.00 sec)
+	Records: 2  Duplicates: 0  Warnings: 0
+
+	Query OK, 6 rows affected (0.00 sec)
+	Records: 6  Duplicates: 0  Warnings: 0
+
+	+-----+----------------------+
+	| cno | cname                |
+	+-----+----------------------+
+	| 101 | xxxxxxxxxxxxxxxxxxxx |
+	| 102 | yyyyyyyyyyyyyyyyyyyy |
+	+-----+----------------------+
+	2 rows in set (0.00 sec)
+
+	+-----+-------+---------+
+	| sno | sname | classno |
+	+-----+-------+---------+
+	|   1 | zs1   |     101 |
+	|   2 | zs2   |     101 |
+	|   3 | zs3   |     102 |
+	|   4 | zs4   |     102 |
+	|   5 | zs5   |     102 |
+	|   6 | zs6   |     102 |
+	+-----+-------+---------+
+	6 rows in set (0.00 sec)
+
+	//创建数据库
+	create database school;
+	//导入数据库
+	source C:\Users\84181\Documents\resources\school.sql
+	提前在school.sql中写好建表语句
+
+	mysql> insert t_student (sname,classno) values ('lisa',103);
+	ERROR 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`school`.`t_student`, CONSTRAINT 	`t_student_ibfk_1` FOREIGN KEY (`classno`) REFERENCES `t_class` (`cno`))
+	//不能直接添加父表中不存在的班级编号，添加应该先添加父表再添加子表
+
+	mysql> desc t_student;
+	+---------+---------+------+-----+---------+----------------+
+	| Field   | Type    | Null | Key | Default | Extra          |
+	+---------+---------+------+-----+---------+----------------+
+	| sno     | int(11) | NO   | PRI | NULL    | auto_increment |
+	| sname   | char(6) | YES  |     | NULL    |                |
+	| classno | int(11) | YES  | MUL | NULL    |                |//外键可以为null
+	+---------+---------+------+-----+---------+----------------+
+	3 rows in set (0.01 sec)
+
+	mysql> desc t_class;
+	+-------+--------------+------+-----+---------+-------+
+	| Field | Type         | Null | Key | Default | Extra |
+	+-------+--------------+------+-----+---------+-------+
+	| cno   | int(11)      | NO   | PRI | NULL    |       |
+	| cname | varchar(255) | YES  |     | NULL    |       |
+	+-------+--------------+------+-----+---------+-------+
+	2 rows in set (0.01 sec)
+
+	mysql> insert into t_student (sname) values ('zs7');
+	Query OK, 1 row affected (0.14 sec)
+
+	mysql> select * from t_student;
+	+-----+-------+---------+
+	| sno | sname | classno |
+	+-----+-------+---------+
+	|   1 | zs1   |     101 |
+	|   2 | zs2   |     101 |
+	|   3 | zs3   |     102 |
+	|   4 | zs4   |     102 |
+	|   5 | zs5   |     102 |
+	|   6 | zs6   |     102 |
+	|   8 | zs7   |    NULL |
+	+-----+-------+---------+
+	7 rows in set (0.00 sec)
+
+	//外键字段引用某个字段时，字段必须是父表的主键吗？
+	被引用的字段不一定是主键，但最少要有唯一性，有unique约束，这是最低要求，一般为主键
+
+
+
+	*检查约束（check）：注意Oracle数据库有check约束，MySQL没有，目前MySQL不支持check约束
+
+
+
+
+2、删除表：drop table if exists 表名；
+	truncate table 表名；
+3、更新表：alter
+	语法格式：alter table 表名 add （字段名1 数据类型，字段名2 数据类型，……）；//增加字段
+	修改列定义：alter table 表名 modify 字段名 数据类型 【defualt】【修改该列到位置】
+	重命名数据表：alter table 表名 rename to 新表名；
+	主键值是这行记录在这张表中的唯一标识，就像人的身份证号一样
+
+4、存储引擎
+	存储引擎描述的是表的存储方式：ENGINE=InnoDB DEFAULT CHARSET=utf8//没有指定存储引擎和字符集就是默认InnoDB和utf8
+	在mysql中标识符是可以使用飘号括起来的，但不通用，建表的时候是可以指定存储引擎和字符集的
+
+	什么是存储引擎：只在MySQL中存在，Oracle中有对应的机制叫存储方式，没有特殊的名字，就是表的存储方式，mysql支持很多存储引擎，每一 		个存储引擎都对应不同的存储方式，每一个存储引擎都有自己的优缺点，需要在合适的世纪选择合适的存储引擎
+
+	查看当前mysql支持的存储引擎：show engines \G；
+	mysql> show engines \G;
+	*************************** 1. row ***************************//不支持
+     	Engine: FEDERATED
+     	Support: NO
+     	Comment: Federated MySQL storage engine
+	Transactions: NULL
+          	XA: NULL
+  	Savepoints: NULL
+	*************************** 2. row ***************************
+      	Engine: MRG_MYISAM
+     	Support: YES
+     	Comment: Collection of identical MyISAM tables
+	Transactions: NO
+          	XA: NO
+  	Savepoints: NO
+	*************************** 3. row ***************************
+      	Engine: MyISAM
+     	Support: YES
+     	Comment: MyISAM storage engine
+	Transactions: NO
+          	XA: NO
+  	Savepoints: NO
+	*************************** 4. row ***************************
+      	Engine: BLACKHOLE
+     	Support: YES
+     	Comment: /dev/null storage engine (anything you write to it disappears)
+	Transactions: NO
+          	XA: NO
+  	Savepoints: NO
+	*************************** 5. row ***************************
+      	Engine: CSV
+     	Support: YES
+     	Comment: CSV storage engine
+	Transactions: NO
+          	XA: NO
+  	Savepoints: NO
+	*************************** 6. row ***************************
+      	Engine: MEMORY
+     	Support: YES
+     	Comment: Hash based, stored in memory, useful for temporary tables
+	Transactions: NO
+          	XA: NO
+  	Savepoints: NO
+	*************************** 7. row ***************************
+      	Engine: ARCHIVE
+     	Support: YES
+     	Comment: Archive storage engine
+	Transactions: NO
+          	XA: NO
+  	Savepoints: NO
+	*************************** 8. row ***************************
+      	Engine: InnoDB
+     	Support: DEFAULT
+     	Comment: Supports transactions, row-level locking, and foreign keys
+	Transactions: YES
+          	XA: YES
+  	Savepoints: YES
+	*************************** 9. row ***************************
+      	Engine: PERFORMANCE_SCHEMA
+     	Support: YES
+     	Comment: Performance Schema
+	Transactions: NO
+          	XA: NO
+  	Savepoints: NO
+	9 rows in set (0.01 sec)
+
+	ERROR:
+	No query specified
+
+	mysql> select version();
+	+-----------+
+	| version() |
+	+-----------+
+	| 5.5.62    |//支持9个
+	+-----------+
+	1 row in set (0.00 sec)
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+	常见的存储引擎：MyISAM（最常用）、InnoDB（默认）、MEMORY
+	MyISAM：三个文件组织
+	Engine: MyISAM
+     	Support: YES
+     	Comment: MyISAM storage engine
+	Transactions: NO//不支持事务
+          	XA: NO
+  	Savepoints: NO
+	//采用三个文件组织表：.MYI索引、.MYD内容、.frm定义
+	优点：可被压缩，节省存储空间，并且可以转换成只读表，可压缩，节省空间，提高检索效率
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+	InnoDB存储引擎：事务、安全、重量级
+	Engine: InnoDB
+     	Support: DEFAULT
+     	Comment: Supports transactions, row-level locking, and foreign keys
+	Transactions: YES
+          	XA: YES
+  	Savepoints: YES
+	//优点：支持事物、外键、行级锁，这种存储引擎最安全，数据安全可以得到保障，但处理速度不是最快的，没有办法被压缩
+	//表的结构存储在.frm文件中，数据存储在tablespace这样的表空间中，无法被压缩，无法转换为只读文件
+	MySQL数据库崩溃后自动恢复机制，支持级联删除、级联更新
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+	MEMORY存储引擎：不支持事物，数据容易丢失，查询速度比较快，因为所有数据和索引都是存储在内存当中
+	优点：查询速度最快，以前叫做HEAP
+	Engine: MEMORY
+     	Support: YES
+     	Comment: Hash based, stored in memory, useful for temporary tables
+	Transactions: NO
+          	XA: NO
+  	Savepoints: NO
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+	java程序员其实不需要太关心存储引擎！
+
+
